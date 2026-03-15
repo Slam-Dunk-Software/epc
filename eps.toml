@@ -1,0 +1,28 @@
+[package]
+name        = "epc"
+description = "A personal cloud harness. Deploy EPS packages as persistent services, accessible on all your devices via Tailscale."
+version     = "0.1.0"
+authors     = ["nickagliano"]
+license     = "Apache-2.0"
+repository  = "https://github.com/Slam-Dunk-Software/epc"
+platform    = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
+
+[service]
+enabled = true
+start   = "cargo run --release -- ps"  # placeholder; real start command TBD
+port    = 2248  # "EPC" on a phone keypad
+
+[ports]
+# The extension points of EPC. See CUSTOMIZE.md for how to plug into each one.
+
+# services: EPS packages deployed as persistent daemons.
+# This is the primary port. Everything else in EPC exists to serve this one.
+services = "~/.epc/services.toml"
+
+# supervisor: how processes are managed.
+# Default is a built-in tokio-based loop. Override to use launchd or systemd.
+supervisor = "builtin"
+
+# dashboard: optional web UI listing running services and their Tailscale URLs.
+# Not shipped by default — plug in your own or install a dashboard EPS.
+dashboard = false

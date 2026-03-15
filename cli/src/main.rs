@@ -1,0 +1,88 @@
+mod commands;
+mod eps;
+mod state;
+mod tailscale;
+
+use anyhow::Result;
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "epc", about = "Extremely Personal Cloud — EPS service runtime")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Check all running services for insecure network bindings
+    Audit,
+    /// Install and start an EPS package as a persistent service.
+    /// Run from inside a project directory with no arguments to deploy it locally.
+    Deploy {
+        /// Package name (looks up in ~/.epm/packages/). Omit when inside a project
+        /// directory — EPC will detect the eps.toml and deploy it automatically.
+        spec: Option<String>,
+        /// Path to a local EPS directory (skips epm lookup).
+        /// Defaults to the current directory if it contains an eps.toml.
+        #[arg(long)]
+        local: Option<std::path::PathBuf>,
+    },
+    /// List running services with their ports and Tailscale URLs
+    Ps,
+    /// Tail logs for a running service
+    Logs {
+        /// Service name
+        name: String,
+    },
+    /// Stop a running service
+    Stop {
+        /// Service name
+        name: String,
+    },
+    /// Stop and restart a running service (picks up source changes)
+    Restart {
+        /// Service name
+        name: String,
+    },
+    /// Manage the Observatory monitoring database
+    Observatory {
+        #[command(subcommand)]
+        command: ObservatoryCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum ObservatoryCommands {
+    /// Remove one or more stale service entries from the Observatory database.
+    ///
+    /// Services that have been stopped or deleted are never automatically pruned
+    /// from Observatory's SQLite history — use this to clean them up.
+    ///
+    /// Example:
+    ///   epc observatory rm mirror epc
+    Rm {
+        /// One or more service names to remove
+        #[arg(required = true)]
+        names: Vec<String>,
+    },
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::Audit => commands::audit::run().await?,
+        Commands::Deploy { spec, local } => commands::deploy::run(spec.as_deref(), local.as_deref()).await?,
+        Commands::Ps => commands::ps::run().await?,
+        Commands::Logs { name } => commands::logs::run(name).await?,
+        Commands::Stop { name } => commands::stop::run(name)?,
+        Commands::Restart { name } => commands::restart::run(name).await?,
+        Commands::Observatory { command } => match command {
+            ObservatoryCommands::Rm { names } => commands::observatory::run(names)?,
+        },
+    }
+
+    Ok(())
+}
