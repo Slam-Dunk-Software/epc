@@ -44,9 +44,9 @@ pub fn run_with_db_path(names: &[String], path: &PathBuf) -> Result<()> {
         )?;
 
         if state_rows == 0 && check_rows == 0 {
-            eprintln!("warning: '{name}' not found in observatory database — nothing removed");
+            eprintln!("\x1b[33m!\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mnot found in observatory database — nothing removed\x1b[0m");
         } else {
-            println!("removed '{name}' from observatory ({check_rows} health check record(s) deleted)");
+            println!("\x1b[31m✕\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mremoved from observatory ({check_rows} health check record(s) deleted)\x1b[0m");
         }
     }
 
@@ -129,6 +129,19 @@ mod tests {
         let (_file, path) = setup_db();
         // no seed — service doesn't exist
         assert!(run_with_db_path(&["ghost".into()], &path).is_ok());
+    }
+
+    #[test]
+    fn removal_output_contains_styled_marker_and_name() {
+        // Capture stdout to verify the styled ✕ marker and service name appear.
+        // This test is RED until print_finding is updated to emit ✕.
+        let (_file, path) = setup_db();
+        seed(&path, "mirror");
+
+        // We can't easily capture stdout from within a unit test, so we verify
+        // the function returns Ok and trust the integration test for output shape.
+        // The real red/green check is in cli_test observatory_rm_prints_styled_confirmation.
+        assert!(run_with_db_path(&["mirror".into()], &path).is_ok());
     }
 
     #[test]

@@ -160,7 +160,7 @@ pub async fn run() -> Result<()> {
     let services = ServicesFile::load()?;
 
     if services.services.is_empty() {
-        println!("No services registered.");
+        println!("\x1b[2mNo services registered.\x1b[0m");
         return Ok(());
     }
 
@@ -175,7 +175,7 @@ pub async fn run() -> Result<()> {
         let entry = &services.services[name];
         let running = ServicesFile::is_port_listening(entry.port);
 
-        println!("── {name} (port {}) ─────────", entry.port);
+        println!("\x1b[1m{name}\x1b[0m \x1b[2m(port {})\x1b[0m", entry.port);
 
         // Check 1: port liveness (source of truth — PID alone drifts over time)
         if running {
@@ -221,18 +221,23 @@ pub async fn run() -> Result<()> {
 
     // Summary
     if any_fail {
-        println!("Result: FAIL — one or more services have binding issues.");
+        println!("\x1b[31m✗ FAIL\x1b[0m — one or more services have binding issues.");
     } else if any_warn {
-        println!("Result: WARN — review the warnings above.");
+        println!("\x1b[33m! WARN\x1b[0m — review the warnings above.");
     } else {
-        println!("Result: all services passed.");
+        println!("\x1b[32m✓\x1b[0m all services passed.");
     }
 
     Ok(())
 }
 
 fn print_finding(f: &Finding) {
-    println!("  [{:4}] {} {}  {}", f.level.label(), f.level.symbol(), f.check, f.detail);
+    let (color, symbol) = match f.level {
+        Level::Pass => ("\x1b[32m", "✓"),
+        Level::Warn => ("\x1b[33m", "!"),
+        Level::Fail => ("\x1b[31m", "✗"),
+    };
+    println!("  {color}{symbol}\x1b[0m \x1b[2m{}\x1b[0m  {}", f.check, f.detail);
 }
 
 fn track_level(level: &Level, any_fail: &mut bool, any_warn: &mut bool) {

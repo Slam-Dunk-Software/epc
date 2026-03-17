@@ -83,8 +83,8 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     let name = &manifest.package.name;
 
     if is_local {
-        eprintln!("deploying {} locally from {}", name, pkg_dir.display());
-        eprintln!("(this runs on your machine — it is not a cloud deployment)");
+        eprintln!("\x1b[2mdeploying {} locally from {}\x1b[0m", name, pkg_dir.display());
+        eprintln!("\x1b[2m(this runs on your machine — it is not a cloud deployment)\x1b[0m");
     }
 
     // Reject if already running (port-based check — PID alone can't stay in sync)
@@ -141,9 +141,9 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     services.insert(name.clone(), entry);
     services.save()?;
 
-    println!("Deployed {name} → http://{host}:{}", svc.port);
-    println!("  pid   {pid}");
-    println!("  logs  {}", log_path.display());
+    println!("\n\x1b[32m✓\x1b[0m \x1b[1m{name}\x1b[0m deployed \x1b[36m→ http://{host}:{}\x1b[0m", svc.port);
+    println!("  \x1b[2mpid   {pid}\x1b[0m");
+    println!("  \x1b[2mlogs  {}\x1b[0m", log_path.display());
 
     Ok(())
 }

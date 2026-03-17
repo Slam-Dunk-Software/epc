@@ -40,7 +40,7 @@ pub fn run_with_state(name: &str, state_path: &Path) -> Result<()> {
     services.remove(name);
     services.save()?;
 
-    println!("Stopped {name}");
+    println!("\x1b[31m✕\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mstopped\x1b[0m");
 
     Ok(())
 }

@@ -8,7 +8,7 @@ pub async fn run() -> Result<()> {
     let services = ServicesFile::load()?;
 
     if services.services.is_empty() {
-        println!("No services running.");
+        println!("\x1b[2mNo services running.\x1b[0m");
         return Ok(());
     }
 
@@ -19,11 +19,11 @@ pub async fn run() -> Result<()> {
     let name_w = services.services.keys().map(|k| k.len()).max().unwrap_or(4).max(4);
 
     println!(
-        "{:<name_w$}  {:>5}  {:>7}  {:<8}  {}",
+        "\x1b[2m{:<name_w$}  {:>5}  {:>7}  {:<8}  {}\x1b[0m",
         "NAME", "PORT", "PID", "STATUS", "URL",
         name_w = name_w,
     );
-    println!("{}", "-".repeat(name_w + 5 + 7 + 8 + 40 + 4 * 2));
+    println!("\x1b[2m{}\x1b[0m", "─".repeat(name_w + 5 + 7 + 8 + 40 + 4 * 2));
 
     let mut names: Vec<&String> = services.services.keys().collect();
     names.sort();
@@ -31,7 +31,7 @@ pub async fn run() -> Result<()> {
     for name in names {
         let entry = &services.services[name];
 
-        let status = if !ServicesFile::is_port_listening(entry.port) {
+        let status_str = if !ServicesFile::is_port_listening(entry.port) {
             "stopped"
         } else {
             // Check if eps.toml declares a health_check endpoint
@@ -54,10 +54,16 @@ pub async fn run() -> Result<()> {
             }
         };
 
+        let status_colored = match status_str {
+            "running"  => format!("\x1b[32m{:<8}\x1b[0m", status_str),
+            "degraded" => format!("\x1b[33m{:<8}\x1b[0m", status_str),
+            _          => format!("\x1b[31m{:<8}\x1b[0m", status_str),
+        };
+
         let url = format!("http://{}:{}", host, entry.port);
         println!(
-            "{:<name_w$}  {:>5}  {:>7}  {:<8}  {}",
-            name, entry.port, entry.pid, status, url,
+            "\x1b[1m{:<name_w$}\x1b[0m  {:>5}  {:>7}  {}  \x1b[36m{}\x1b[0m",
+            name, entry.port, entry.pid, status_colored, url,
             name_w = name_w,
         );
     }

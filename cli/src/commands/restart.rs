@@ -35,7 +35,7 @@ pub async fn run_with_state(name: &str, state_path: &Path) -> Result<()> {
     // Also kill anything still on the port — handles processes whose PGID drifted
     // or services deployed before this fix.
     for pid in ServicesFile::pids_on_port(entry.port) {
-        eprintln!("[epc] stopping pid {pid} on port {}", entry.port);
+        eprintln!("\x1b[2m  stopping pid {pid} on port {}\x1b[0m", entry.port);
         std::process::Command::new("kill")
             .arg(pid.to_string())
             .stdout(std::process::Stdio::null())
@@ -100,9 +100,9 @@ pub async fn run_with_state(name: &str, state_path: &Path) -> Result<()> {
     services.insert(name.to_string(), new_entry);
     services.save()?;
 
-    println!("Restarted {name} → http://{host}:{}", svc.port);
-    println!("  pid   {pid}");
-    println!("  logs  {}", log_path.display());
+    println!("\n\x1b[32m✓\x1b[0m \x1b[1m{name}\x1b[0m restarted \x1b[36m→ http://{host}:{}\x1b[0m", svc.port);
+    println!("  \x1b[2mpid   {pid}\x1b[0m");
+    println!("  \x1b[2mlogs  {}\x1b[0m", log_path.display());
 
     Ok(())
 }
