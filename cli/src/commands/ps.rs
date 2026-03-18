@@ -13,7 +13,10 @@ pub async fn run() -> Result<()> {
     }
 
     let host = tailscale::ip().await?;
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .unwrap_or_default();
 
     // Column widths
     let name_w = services.services.keys().map(|k| k.len()).max().unwrap_or(4).max(4);
@@ -41,13 +44,17 @@ pub async fn run() -> Result<()> {
                 .and_then(|s| s.health_check);
 
             if let Some(_check) = health_check {
-                let url = format!("http://{}:{}/health", host, entry.port);
-                let ok = client
-                    .get(&url)
-                    .timeout(Duration::from_secs(2))
-                    .send().await
-                    .map(|r| r.status().is_success())
-                    .unwrap_or(false);
+                let http_url  = format!("http://{}:{}/health",  host, entry.port);
+                let https_url = format!("https://{}:{}/health", host, entry.port);
+                let ok = async {
+                    // Try HTTP first, then HTTPS (handles TLS services with self-signed certs)
+                    if let Ok(r) = client.get(&http_url).timeout(Duration::from_secs(2)).send().await {
+                        return r.status().is_success();
+                    }
+                    client.get(&https_url).timeout(Duration::from_secs(2)).send().await
+                        .map(|r| r.status().is_success())
+                        .unwrap_or(false)
+                }.await;
                 if ok { "running" } else { "degraded" }
             } else {
                 "running"
