@@ -9,6 +9,7 @@ platform    = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
 
 [service]
 enabled = true
+startup      = true
 start   = "cargo run --release -- ps"  # placeholder; real start command TBD
 port    = 2248  # "EPC" on a phone keypad
 
