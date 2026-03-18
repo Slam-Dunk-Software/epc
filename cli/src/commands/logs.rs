@@ -15,6 +15,8 @@ pub async fn run(name: &str) -> Result<()> {
         bail!("log file not found: {}", log_path.display());
     }
 
+    eprintln!("\x1b[2mstreaming logs for\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2m— Ctrl-C to stop\x1b[0m");
+
     // Stream the log file with `tail -f`
     let status = tokio::process::Command::new("tail")
         .args(["-f", &entry.log_file])

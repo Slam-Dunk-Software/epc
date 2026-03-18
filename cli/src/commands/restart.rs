@@ -35,7 +35,6 @@ pub async fn run_with_state(name: &str, state_path: &Path) -> Result<()> {
     // Also kill anything still on the port — handles processes whose PGID drifted
     // or services deployed before this fix.
     for pid in ServicesFile::pids_on_port(entry.port) {
-        eprintln!("\x1b[2m  stopping pid {pid} on port {}\x1b[0m", entry.port);
         std::process::Command::new("kill")
             .arg(pid.to_string())
             .stdout(std::process::Stdio::null())

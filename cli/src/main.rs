@@ -7,7 +7,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "epc", about = "Extremely Personal Cloud — EPS service runtime")]
+#[command(name = "epc", about = "Extremely Personal Cloud — EPS service runtime", version)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

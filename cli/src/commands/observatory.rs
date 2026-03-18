@@ -46,7 +46,7 @@ pub fn run_with_db_path(names: &[String], path: &PathBuf) -> Result<()> {
         if state_rows == 0 && check_rows == 0 {
             eprintln!("\x1b[33m!\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mnot found in observatory database — nothing removed\x1b[0m");
         } else {
-            println!("\x1b[31m✕\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mremoved from observatory ({check_rows} health check record(s) deleted)\x1b[0m");
+            println!("\x1b[31m✕\x1b[0m \x1b[1m{name}\x1b[0m \x1b[2mremoved from observatory\x1b[0m");
         }
     }
 
