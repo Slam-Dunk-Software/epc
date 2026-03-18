@@ -21,6 +21,7 @@ tracing-subscriber = { workspace = true }
 chrono             = { workspace = true }
 reqwest            = { workspace = true }
 rusqlite           = { workspace = true }
+semver             = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = "2"

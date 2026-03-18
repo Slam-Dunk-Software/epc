@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "epc"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -288,6 +288,7 @@ dependencies = [
  "predicates",
  "reqwest",
  "rusqlite",
+ "semver",
  "serde",
  "serde_json",
  "tempfile",

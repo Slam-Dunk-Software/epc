@@ -50,6 +50,8 @@ enum Commands {
         #[command(subcommand)]
         command: ObservatoryCommands,
     },
+    /// Update epc to the latest release
+    SelfUpdate,
 }
 
 #[derive(Subcommand)]
@@ -82,6 +84,7 @@ async fn main() -> Result<()> {
         Commands::Observatory { command } => match command {
             ObservatoryCommands::Rm { names } => commands::observatory::run(names)?,
         },
+        Commands::SelfUpdate => commands::self_update::run().await?,
     }
 
     Ok(())
