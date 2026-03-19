@@ -99,6 +99,13 @@ impl ServicesFile {
             .unwrap_or(false)
     }
 
+    /// Starting from `preferred`, return the first port that is not listening.
+    /// Scans up to 100 ports above the preferred value before giving up.
+    pub fn find_available_port(preferred: u16) -> Option<u16> {
+        (preferred..preferred.saturating_add(100))
+            .find(|&p| !Self::is_port_listening(p))
+    }
+
     /// Returns all PIDs currently listening on `port` (any interface).
     ///
     /// Use this for kill operations instead of the cached PID in services.toml —

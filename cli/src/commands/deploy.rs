@@ -104,9 +104,26 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
             bail!("'{name}' is already running on port {}", existing.port);
         }
         services.remove(name);
-    } else if ServicesFile::is_port_listening(svc.port) {
-        bail!("port {} is already in use — is '{name}' running outside EPC?", svc.port);
     }
+
+    // Resolve the port to actually use — auto-assign if the preferred port is taken
+    let port = if ServicesFile::is_port_listening(svc.port) {
+        let assigned = ServicesFile::find_available_port(svc.port + 1)
+            .with_context(|| format!("port {} is in use and no free port found nearby", svc.port))?;
+        eprintln!(
+            "\x1b[33m⚠\x1b[0m  port {} in use — assigning port {} instead",
+            svc.port, assigned
+        );
+        // Write the chosen port back to eps.toml so restarts use the same port
+        let toml_path = pkg_dir.join("eps.toml");
+        if let Ok(contents) = std::fs::read_to_string(&toml_path) {
+            let updated = regex_replace_port(&contents, svc.port, assigned);
+            let _ = std::fs::write(&toml_path, updated);
+        }
+        assigned
+    } else {
+        svc.port
+    };
 
     // Set up log file
     let log_dir = dirs::home_dir()
@@ -127,7 +144,7 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
         .arg("-c")
         .arg(&svc.start)
         .current_dir(&pkg_dir)
-        .env("PORT", svc.port.to_string())
+        .env("PORT", port.to_string())
         .process_group(0)
         .stdout(log_file)
         .stderr(log_stderr)
@@ -143,7 +160,7 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     let started = chrono::Utc::now().to_rfc3339();
     let entry = ServiceEntry {
         dir: pkg_dir.to_string_lossy().to_string(),
-        port: svc.port,
+        port,
         pid,
         started,
         log_file: log_path.to_string_lossy().to_string(),
@@ -151,11 +168,34 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     services.insert(name.clone(), entry);
     services.save()?;
 
-    println!("\n\x1b[32m✓\x1b[0m \x1b[1m{name}\x1b[0m deployed \x1b[36m→ http://{host}:{}\x1b[0m", svc.port);
+    println!("\n\x1b[32m✓\x1b[0m \x1b[1m{name}\x1b[0m deployed \x1b[36m→ http://{host}:{port}\x1b[0m");
     println!("  \x1b[2mpid   {pid}\x1b[0m");
     println!("  \x1b[2mlogs  {}\x1b[0m", log_path.display());
 
     Ok(())
+}
+
+/// Replace the `port = <old>` line in an eps.toml with `port = <new>`.
+/// Leaves all other content untouched.
+fn regex_replace_port(contents: &str, old: u16, new: u16) -> String {
+    contents
+        .lines()
+        .map(|line| {
+            let trimmed = line.trim();
+            if trimmed.starts_with("port") {
+                if let Some(rest) = trimmed.strip_prefix("port") {
+                    let rest = rest.trim_start_matches(|c: char| c.is_whitespace() || c == '=').trim();
+                    let val = rest.split('#').next().unwrap_or("").trim();
+                    if val == old.to_string().as_str() {
+                        let indent = &line[..line.len() - line.trim_start().len()];
+                        return format!("{indent}port = {new}");
+                    }
+                }
+            }
+            line.to_string()
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]
