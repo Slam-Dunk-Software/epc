@@ -555,3 +555,54 @@ fn logs_unregistered_service_fails_with_hint() {
         .failure()
         .stderr(predicate::str::contains("no service named"));
 }
+
+// ── install-startup ───────────────────────────────────────────────────────────
+
+#[test]
+fn install_startup_succeeds() {
+    let home = TempDir::new().unwrap();
+    epc(&home)
+        .args(["install-startup"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("EPC startup installed"));
+}
+
+#[test]
+fn install_startup_writes_startup_file() {
+    let home = TempDir::new().unwrap();
+    epc(&home).args(["install-startup"]).assert().success();
+
+    #[cfg(target_os = "macos")]
+    {
+        let plist = home.path()
+            .join("Library/LaunchAgents/com.eps.epc-startup.plist");
+        assert!(plist.exists(), "plist should be written");
+        let contents = std::fs::read_to_string(&plist).unwrap();
+        assert!(contents.contains("epc"), "plist should reference epc binary");
+        assert!(contents.contains("startup"), "plist should run epc startup");
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let unit = home.path()
+            .join(".config/systemd/user/epc-startup.service");
+        assert!(unit.exists(), "systemd unit file should be written");
+        let contents = std::fs::read_to_string(&unit).unwrap();
+        assert!(contents.contains("ExecStart="), "unit should have ExecStart");
+        assert!(contents.contains("startup"), "unit should run epc startup");
+    }
+}
+
+#[test]
+fn install_startup_already_installed_reports_correctly() {
+    let home = TempDir::new().unwrap();
+    // Install once
+    epc(&home).args(["install-startup"]).assert().success();
+    // Install again — should report already installed, not error
+    epc(&home)
+        .args(["install-startup"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("already installed"));
+}
