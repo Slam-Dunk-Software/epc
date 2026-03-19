@@ -160,16 +160,19 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     // kill -0 is unreliable here because an un-reaped child stays in the process
     // table as a zombie, making it look alive. try_wait() reaps it correctly.
     if let Ok(Some(_)) = child.try_wait() {
-        eprintln!("\n\x1b[31m✗\x1b[0m \x1b[1m{name}\x1b[0m exited immediately — it likely crashed on startup.");
-        eprintln!("  \x1b[2mlogs  {}\x1b[0m\n", log_path.display());
+        eprintln!("\n\x1b[31m✗\x1b[0m \x1b[1m{name}\x1b[0m exited immediately — it likely crashed on startup.\n");
         if let Ok(contents) = std::fs::read_to_string(&log_path) {
             let lines: Vec<&str> = contents.lines().collect();
-            let tail = &lines[lines.len().saturating_sub(15)..];
-            for line in tail {
+            let head = &lines[..lines.len().min(10)];
+            for line in head {
                 eprintln!("  \x1b[2m{line}\x1b[0m");
             }
+            if lines.len() > 10 {
+                eprintln!("  \x1b[2m... ({} more lines)\x1b[0m", lines.len() - 10);
+            }
         }
-        eprintln!("\n  \x1b[2mFix the error above, then run\x1b[0m \x1b[36mepc deploy\x1b[0m \x1b[2magain.\x1b[0m");
+        eprintln!("\n  \x1b[2mFull logs:\x1b[0m \x1b[36mepc logs {name}\x1b[0m");
+        eprintln!("  \x1b[2mFix the error above, then run\x1b[0m \x1b[36mepc deploy\x1b[0m \x1b[2magain.\x1b[0m");
         std::process::exit(1);
     }
 
