@@ -140,7 +140,7 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     // process_group(0) puts the child in its own process group (PGID = child PID)
     // so that `kill -- -<pgid>` during stop/restart kills bash + all descendants,
     // including binaries that haven't bound to the port yet.
-    let child = tokio::process::Command::new("bash")
+    let mut child = tokio::process::Command::new("bash")
         .arg("-c")
         .arg(&svc.start)
         .current_dir(&pkg_dir)
@@ -152,6 +152,26 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
         .with_context(|| format!("failed to spawn '{}'", svc.start))?;
 
     let pid = child.id().context("failed to get PID of spawned process")?;
+
+    // Give the process a moment to start (or crash)
+    tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+
+    // Crash detection: try_wait() returns Some if the process has already exited.
+    // kill -0 is unreliable here because an un-reaped child stays in the process
+    // table as a zombie, making it look alive. try_wait() reaps it correctly.
+    if let Ok(Some(_)) = child.try_wait() {
+        eprintln!("\n\x1b[31m✗\x1b[0m \x1b[1m{name}\x1b[0m exited immediately — it likely crashed on startup.");
+        eprintln!("  \x1b[2mlogs  {}\x1b[0m\n", log_path.display());
+        if let Ok(contents) = std::fs::read_to_string(&log_path) {
+            let lines: Vec<&str> = contents.lines().collect();
+            let tail = &lines[lines.len().saturating_sub(15)..];
+            for line in tail {
+                eprintln!("  \x1b[2m{line}\x1b[0m");
+            }
+        }
+        eprintln!("\n  \x1b[2mFix the error above, then run\x1b[0m \x1b[36mepc deploy\x1b[0m \x1b[2magain.\x1b[0m");
+        std::process::exit(1);
+    }
 
     // Detect Tailscale hostname
     let host = tailscale::ip().await?;
