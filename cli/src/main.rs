@@ -17,11 +17,12 @@ struct Cli {
 enum Commands {
     /// Check all running services for insecure network bindings
     Audit,
-    /// Install and start an EPS package as a persistent service.
-    /// Run from inside a project directory with no arguments to deploy it locally.
-    Deploy {
+    /// Start an EPS service from a project directory (or installed package).
+    /// Run from inside a project directory with no arguments to serve it locally.
+    #[command(name = "serve")]
+    Serve {
         /// Package name (looks up in ~/.epm/packages/). Omit when inside a project
-        /// directory — EPC will detect the eps.toml and deploy it automatically.
+        /// directory — EPC will detect the eps.toml and serve it automatically.
         spec: Option<String>,
         /// Path to a local EPS directory (skips epm lookup).
         /// Defaults to the current directory if it contains an eps.toml.
@@ -92,7 +93,7 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Audit => commands::audit::run().await?,
-        Commands::Deploy { spec, local } => commands::deploy::run(spec.as_deref(), local.as_deref()).await?,
+        Commands::Serve { spec, local } => commands::deploy::run(spec.as_deref(), local.as_deref()).await?,
         Commands::Ps => commands::ps::run().await?,
         Commands::Logs { name } => commands::logs::run(name).await?,
         Commands::Stop { name } => commands::stop::run(name)?,

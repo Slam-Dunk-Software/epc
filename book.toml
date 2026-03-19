@@ -1,0 +1,9 @@
+[book]
+title       = "EPC — Extremely Personal Cloud"
+authors     = ["nickagliano"]
+language    = "en"
+src         = "docs"
+
+[output.html]
+site-url    = "/"
+git-repository-url = "https://github.com/nickagliano/epc"
