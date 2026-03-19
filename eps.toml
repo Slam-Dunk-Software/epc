@@ -1,7 +1,7 @@
 [package]
 name        = "epc"
 description = "A personal cloud harness. Deploy EPS packages as persistent services, accessible on all your devices via Tailscale."
-version     = "0.1.1"
+version     = "0.1.6"
 authors     = ["nickagliano"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Slam-Dunk-Software/epc"
