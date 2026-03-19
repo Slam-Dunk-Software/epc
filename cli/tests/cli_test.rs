@@ -20,7 +20,7 @@ fn help_lists_all_subcommands() {
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicate::str::contains("deploy"))
+        .stdout(predicate::str::contains("serve"))
         .stdout(predicate::str::contains("ps"))
         .stdout(predicate::str::contains("logs"))
         .stdout(predicate::str::contains("stop"));
@@ -33,10 +33,10 @@ fn no_args_prints_help_and_fails() {
 }
 
 #[test]
-fn deploy_help_shows_local_flag() {
+fn serve_help_shows_local_flag() {
     let home = TempDir::new().unwrap();
     epc(&home)
-        .args(["deploy", "--help"])
+        .args(["serve", "--help"])
         .assert()
         .success()
         .stdout(predicate::str::contains("local"));
@@ -83,38 +83,38 @@ fn ps_with_no_services_prints_message() {
 // ── deploy errors ─────────────────────────────────────────────────────────────
 
 #[test]
-fn deploy_uninstalled_package_fails_with_hint() {
+fn serve_uninstalled_package_fails_with_hint() {
     let home = TempDir::new().unwrap();
     epc(&home)
-        .args(["deploy", "nonexistent_pkg"])
+        .args(["serve", "nonexistent_pkg"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("not installed"));
 }
 
 #[test]
-fn deploy_local_missing_path_fails() {
+fn serve_local_missing_path_fails() {
     let home = TempDir::new().unwrap();
     epc(&home)
-        .args(["deploy", "x", "--local", "/no/such/path"])
+        .args(["serve", "x", "--local", "/no/such/path"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("could not resolve"));
 }
 
 #[test]
-fn deploy_local_no_eps_toml_fails() {
+fn serve_local_no_eps_toml_fails() {
     let home = TempDir::new().unwrap();
     let pkg_dir = TempDir::new().unwrap(); // no eps.toml inside
     epc(&home)
-        .args(["deploy", "x", "--local", pkg_dir.path().to_str().unwrap()])
+        .args(["serve", "x", "--local", pkg_dir.path().to_str().unwrap()])
         .assert()
         .failure()
         .stderr(predicate::str::contains("failed to read"));
 }
 
 #[test]
-fn deploy_local_no_service_block_fails_informatively() {
+fn serve_local_no_service_block_fails_informatively() {
     let home = TempDir::new().unwrap();
     let pkg_dir = TempDir::new().unwrap();
     std::fs::write(
@@ -133,7 +133,7 @@ repository = ""
     .unwrap();
 
     epc(&home)
-        .args(["deploy", "no_service_pkg", "--local", pkg_dir.path().to_str().unwrap()])
+        .args(["serve", "no_service_pkg", "--local", pkg_dir.path().to_str().unwrap()])
         .assert()
         .failure()
         .stderr(predicate::str::contains("no [service] block"));
@@ -142,28 +142,28 @@ repository = ""
 // ── deploy: path-like spec ────────────────────────────────────────────────────
 
 #[test]
-fn deploy_dot_as_spec_is_not_treated_as_package_name() {
+fn serve_dot_as_spec_is_not_treated_as_package_name() {
     let home = TempDir::new().unwrap();
     // "." should not produce "not installed" — it should try to resolve as a local path
     epc(&home)
-        .args(["deploy", "."])
+        .args(["serve", "."])
         .assert()
         .failure()
         .stderr(predicate::str::contains("not installed").not());
 }
 
 #[test]
-fn deploy_dot_slash_path_is_not_treated_as_package_name() {
+fn serve_dot_slash_path_is_not_treated_as_package_name() {
     let home = TempDir::new().unwrap();
     epc(&home)
-        .args(["deploy", "./my_project"])
+        .args(["serve", "./my_project"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("not installed").not());
 }
 
 #[test]
-fn deploy_absolute_path_as_spec_works_like_local() {
+fn serve_absolute_path_as_spec_works_like_local() {
     let home = TempDir::new().unwrap();
     let pkg_dir = TempDir::new().unwrap();
     std::fs::write(
@@ -182,7 +182,7 @@ repository = ""
     .unwrap();
     // Absolute path as the positional spec — should fail with "no [service] block", not "not installed"
     epc(&home)
-        .args(["deploy", pkg_dir.path().to_str().unwrap()])
+        .args(["serve", pkg_dir.path().to_str().unwrap()])
         .assert()
         .failure()
         .stderr(predicate::str::contains("no [service] block"));
@@ -191,7 +191,7 @@ repository = ""
 // ── deploy: eps.toml parse errors ─────────────────────────────────────────────
 
 #[test]
-fn deploy_missing_package_section_gives_friendly_error() {
+fn serve_missing_package_section_gives_friendly_error() {
     let home = TempDir::new().unwrap();
     let pkg_dir = TempDir::new().unwrap();
     std::fs::write(
@@ -205,7 +205,7 @@ port = 9000
     )
     .unwrap();
     epc(&home)
-        .args(["deploy", "--local", pkg_dir.path().to_str().unwrap()])
+        .args(["serve", "--local", pkg_dir.path().to_str().unwrap()])
         .assert()
         .failure()
         .stderr(predicate::str::contains("[package]"));
