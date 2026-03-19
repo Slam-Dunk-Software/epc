@@ -1,8 +1,12 @@
 pub mod audit;
 pub mod deploy;
+pub mod install_startup;
 pub mod logs;
 pub mod observatory;
+pub mod prune;
 pub mod ps;
+pub mod remove;
 pub mod restart;
 pub mod self_update;
+pub mod startup;
 pub mod stop;

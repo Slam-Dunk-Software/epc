@@ -41,6 +41,16 @@ pub fn resolve_package_dir_inner(
     }
 
     let spec = spec.unwrap();
+
+    // Treat anything that looks like a path as --local (catches ".", "..", "./foo", "/abs/path")
+    if spec.starts_with('.') || spec.starts_with('/') || spec.starts_with('~') {
+        let path = Path::new(spec);
+        let abs = path
+            .canonicalize()
+            .with_context(|| format!("could not resolve local path '{spec}'"))?;
+        return Ok(abs);
+    }
+
     let base = packages_base.join(spec);
     if !base.exists() {
         bail!(
@@ -207,5 +217,68 @@ mod tests {
         // We can't change cwd easily in tests, so just verify the installed path errors cleanly
         let err = resolve_package_dir_inner(Some("ghost"), None, &packages_base).unwrap_err();
         assert!(err.to_string().contains("not installed"));
+    }
+
+    // ── path-like spec treated as local path ──────────────────────────────────
+
+    #[test]
+    fn spec_absolute_path_resolves_as_local() {
+        let dir = TempDir::new().unwrap();
+        let packages_base = dir.path().join("packages");
+        std::fs::create_dir_all(&packages_base).unwrap();
+        // Absolute path as spec — should resolve as local, not as package name
+        let project = TempDir::new().unwrap();
+        let result = resolve_package_dir_inner(
+            Some(project.path().to_str().unwrap()),
+            None,
+            &packages_base,
+        )
+        .unwrap();
+        assert_eq!(result, project.path().canonicalize().unwrap());
+    }
+
+    #[test]
+    fn spec_dot_resolves_as_local() {
+        let dir = TempDir::new().unwrap();
+        let packages_base = dir.path().join("packages");
+        std::fs::create_dir_all(&packages_base).unwrap();
+        // "." as spec — should resolve as local (current dir), not look in ~/.epm/packages/.
+        // We can't change cwd in tests, so verify it does NOT bail with "not installed"
+        let err_or_ok = resolve_package_dir_inner(Some("."), None, &packages_base);
+        if let Err(e) = &err_or_ok {
+            // The only acceptable error is canonicalize failing — never "not installed"
+            assert!(
+                !e.to_string().contains("not installed"),
+                "spec '.' should not be looked up as a package name, got: {e}"
+            );
+        }
+    }
+
+    #[test]
+    fn spec_dot_slash_resolves_as_local() {
+        let dir = TempDir::new().unwrap();
+        let packages_base = dir.path().join("packages");
+        std::fs::create_dir_all(&packages_base).unwrap();
+        let err_or_ok = resolve_package_dir_inner(Some("./my_proj"), None, &packages_base);
+        if let Err(e) = &err_or_ok {
+            assert!(
+                !e.to_string().contains("not installed"),
+                "spec './my_proj' should not be treated as a package name, got: {e}"
+            );
+        }
+    }
+
+    #[test]
+    fn spec_dotdot_resolves_as_local() {
+        let dir = TempDir::new().unwrap();
+        let packages_base = dir.path().join("packages");
+        std::fs::create_dir_all(&packages_base).unwrap();
+        let err_or_ok = resolve_package_dir_inner(Some(".."), None, &packages_base);
+        if let Err(e) = &err_or_ok {
+            assert!(
+                !e.to_string().contains("not installed"),
+                "spec '..' should not be treated as a package name, got: {e}"
+            );
+        }
     }
 }

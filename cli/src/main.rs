@@ -40,11 +40,27 @@ enum Commands {
         /// Service name
         name: String,
     },
+    /// Fully remove a service: stop it, delete its log, and purge it from the Observatory database
+    Remove {
+        /// Service name
+        name: String,
+    },
+    /// Remove all services whose project directory no longer exists
+    Prune,
     /// Stop and restart a running service (picks up source changes)
     Restart {
         /// Service name
         name: String,
     },
+    /// Restart all services registered in ~/.epc/services.toml that are not already running.
+    /// Waits for Tailscale to be ready before deploying. Run automatically by the login
+    /// LaunchAgent installed via `epc install-startup`.
+    Startup,
+    /// Install a macOS LaunchAgent so EPC services restart automatically on login.
+    /// Creates ~/Library/LaunchAgents/com.eps.epc-startup.plist and loads it.
+    /// macOS only.
+    #[cfg(target_os = "macos")]
+    InstallStartup,
     /// Manage the Observatory monitoring database
     Observatory {
         #[command(subcommand)]
@@ -80,7 +96,12 @@ async fn main() -> Result<()> {
         Commands::Ps => commands::ps::run().await?,
         Commands::Logs { name } => commands::logs::run(name).await?,
         Commands::Stop { name } => commands::stop::run(name)?,
+        Commands::Remove { name } => commands::remove::run(name)?,
+        Commands::Prune => commands::prune::run()?,
         Commands::Restart { name } => commands::restart::run(name).await?,
+        Commands::Startup => commands::startup::run().await?,
+        #[cfg(target_os = "macos")]
+        Commands::InstallStartup => commands::install_startup::run()?,
         Commands::Observatory { command } => match command {
             ObservatoryCommands::Rm { names } => commands::observatory::run(names)?,
         },
