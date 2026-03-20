@@ -93,7 +93,7 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Audit => commands::audit::run().await?,
-        Commands::Serve { spec, local } => commands::deploy::run(spec.as_deref(), local.as_deref()).await?,
+        Commands::Serve { spec, local } => commands::serve::run(spec.as_deref(), local.as_deref()).await?,
         Commands::Ps => commands::ps::run().await?,
         Commands::Logs { name } => commands::logs::run(name).await?,
         Commands::Stop { name } => commands::stop::run(name)?,

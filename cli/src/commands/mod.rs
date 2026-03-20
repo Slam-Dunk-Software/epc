@@ -1,5 +1,5 @@
 pub mod audit;
-pub mod deploy;
+pub mod serve;
 pub mod install_startup;
 pub mod logs;
 pub mod observatory;

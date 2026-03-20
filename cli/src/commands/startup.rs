@@ -58,7 +58,7 @@ pub async fn run() -> Result<()> {
             continue;
         }
 
-        match crate::commands::deploy::run(None, Some(&dir)).await {
+        match crate::commands::serve::run(None, Some(&dir)).await {
             Ok(()) => started += 1,
             Err(e) => {
                 eprintln!("  \x1b[31m✗ {name}: {e}\x1b[0m");
