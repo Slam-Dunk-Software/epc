@@ -31,7 +31,7 @@ without port forwarding, without dynamic DNS, without a cloud middleman.
 EPC turns that machine into your personal cloud:
 
 ```
-epc deploy tech_talker
+epc serve tech_talker
 # → installs via epm
 # → starts as a persistent daemon
 # → binds to port 8080
@@ -98,7 +98,7 @@ This is a proposed extension to the eps.toml spec (not yet ADR'd).
 
 | Command              | Description                                          |
 |----------------------|------------------------------------------------------|
-| `epc deploy <spec>`  | Install + start an EPS as a persistent daemon        |
+| `epc serve <spec>`  | Install + start an EPS as a persistent daemon        |
 | `epc ps`             | List running services with ports and Tailscale URLs  |
 | `epc logs <name>`    | Tail stdout/stderr for a service                     |
 | `epc stop <name>`    | Stop a running service                               |

@@ -5,7 +5,7 @@
 
 ## Context
 
-EPC spawns processes and needs to track them across CLI invocations. `epc deploy`
+EPC spawns processes and needs to track them across CLI invocations. `epc serve`
 starts a service and exits — the next time the user runs `epc ps` or `epc stop`, EPC
 must know what processes it launched, their PIDs, ports, and where their logs are.
 
@@ -60,7 +60,7 @@ Each key under `[services]` is the package name (from `eps.toml [package].name`)
     tech_talker.log
 ```
 
-`~/.epc/` is created automatically by `epc deploy` on first use. The user owns this
+`~/.epc/` is created automatically by `epc serve` on first use. The user owns this
 directory and can inspect or back it up freely.
 
 ### Stale entry handling
@@ -70,7 +70,7 @@ machine was rebooted. EPC detects stale entries lazily:
 
 - `epc ps` checks `kill -0 <pid>` for each entry and reports status as `stopped`
   for dead processes (the entry is not auto-removed)
-- `epc deploy` checks for a stale entry with the same name and removes it before
+- `epc serve` checks for a stale entry with the same name and removes it before
   re-registering the new process
 
 EPC does not reap or auto-restart crashed services (see ADR-0005).
@@ -102,7 +102,7 @@ SQLite would support queries, transactions, and schema evolution. It is not need
 **Negative:**
 - No automatic cleanup of stale entries — `stopped` services linger until manually
   removed or until a redeploy of the same package name
-- No locking — concurrent `epc deploy` calls could corrupt the file (acceptable for
+- No locking — concurrent `epc serve` calls could corrupt the file (acceptable for
   a single-user personal tool)
 - Schema evolution requires careful backwards compatibility (adding optional fields is safe;
   renaming or removing fields is not)

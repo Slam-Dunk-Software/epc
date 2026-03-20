@@ -8,7 +8,7 @@
 As the EPS ecosystem grows, services increasingly depend on other services at runtime.
 `morning_brief`, for example, is useless without both `simple_todo` (to read todos from)
 and `txtme` (to deliver the SMS). Right now there is no way to express this. The
-consequence is silent failure: `epc deploy morning_brief` succeeds even if neither
+consequence is silent failure: `epc serve morning_brief` succeeds even if neither
 dependency is running, and the user only discovers the problem when the 9am brief
 doesn't arrive.
 
@@ -42,13 +42,13 @@ port       = 5544
 depends_on = ["txtme", "simple_todo"]
 ```
 
-`depends_on` is a list of EPS package names — the same names used with `epc deploy`
+`depends_on` is a list of EPS package names — the same names used with `epc serve`
 and stored in `~/.epc/services.toml`. An absent or empty `depends_on` means no runtime
 dependencies, which preserves full backwards compatibility.
 
 ### EPC behavior at deploy time
 
-When `epc deploy <name>` is called for a package with `depends_on`, EPC checks
+When `epc serve <name>` is called for a package with `depends_on`, EPC checks
 `~/.epc/services.toml` for each declared dependency:
 
 1. **Present and `running`** → proceed normally.
@@ -60,7 +60,7 @@ When `epc deploy <name>` is called for a package with `depends_on`, EPC checks
 3. **Not present** → hard-block with an actionable message:
    ```
    error: dependency 'txtme' is not deployed
-     fix: epc deploy txtme
+     fix: epc serve txtme
    ```
 
 EPC does **not** auto-deploy or auto-restart missing dependencies. Side effects on
@@ -143,7 +143,7 @@ from this ADR to keep scope narrow.
 - No orchestration complexity — EPC checks and warns, the user acts
 
 **Negative:**
-- `epc deploy` gains a new failure mode; users with no dependencies are unaffected,
+- `epc serve` gains a new failure mode; users with no dependencies are unaffected,
   but users who declare dependencies must ensure ordering
 - `epc stop` warnings add friction to teardown; could annoy during development
 - `degraded` status requires EPC to understand the dep graph, increasing `epc ps`

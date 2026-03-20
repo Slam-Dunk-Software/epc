@@ -5,7 +5,7 @@
 
 ## Context
 
-`epc deploy` spawns a service process and exits. The service must continue running
+`epc serve` spawns a service process and exits. The service must continue running
 after the CLI exits, stdout/stderr must be captured somewhere useful, and `epc stop`
 must be able to terminate the process later.
 
@@ -19,7 +19,7 @@ This ADR documents:
 
 ### Spawning
 
-`epc deploy` spawns the service via:
+`epc serve` spawns the service via:
 
 ```rust
 tokio::process::Command::new("bash")
@@ -46,7 +46,7 @@ without any `cd` needed.
 it from the environment if it chooses. The service may also ignore `PORT` and use its
 compiled-in default — EPC does not enforce consistency.
 
-**Detached** — The child process is spawned and immediately handed off. `epc deploy`
+**Detached** — The child process is spawned and immediately handed off. `epc serve`
 records the PID and exits. There is no supervisor loop or long-running EPC process.
 The service runs as an independent OS process.
 
@@ -58,7 +58,7 @@ All stdout and stderr from the service process are redirected to a single log fi
 ~/.epc/logs/<name>.log
 ```
 
-The log file is created fresh on each `epc deploy` (overwriting any previous log for
+The log file is created fresh on each `epc serve` (overwriting any previous log for
 that service name). `epc logs <name>` runs `tail -f` on the log file for live streaming.
 
 **Why a single log file (not split stdout/stderr):** Services commonly interleave both
@@ -113,7 +113,7 @@ unreachable — EPC only needs to see the top-level result.
 
 ### Port conflict detection
 
-`epc deploy` checks whether the declared port is already listening before spawning,
+`epc serve` checks whether the declared port is already listening before spawning,
 regardless of whether the service is tracked in `services.toml`. This catches both
 "already deployed via EPC" and "started manually outside EPC":
 
@@ -135,12 +135,12 @@ limits as the user's shell session. No cgroups, no ulimits.
 ## Consequences
 
 **Positive:**
-- Services survive `epc deploy` exiting — no long-lived EPC daemon required
+- Services survive `epc serve` exiting — no long-lived EPC daemon required
 - Log files in `~/.epc/logs/` are easy to find and inspect
 - SIGTERM gives services a chance to shut down gracefully
 - The spawn model is simple enough to test without process mocking
 
 **Negative:**
-- Services do not auto-restart on crash — the user must re-run `epc deploy`
+- Services do not auto-restart on crash — the user must re-run `epc serve`
 - SIGTERM without SIGKILL followup means a misbehaving service may not actually stop
 - Log files are overwritten on redeploy — no log rotation or history

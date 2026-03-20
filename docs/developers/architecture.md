@@ -27,7 +27,7 @@ epc/
 ## Data flow
 
 ```
-epc deploy [<name>] [--local <path>]
+epc serve [<name>] [--local <path>]
   └─ resolve project dir         # --local path, cwd, or ~/.epm/packages/<name>/
   └─ read [service] from eps.toml  # learns start command + port
   └─ check port not already in use # via is_port_listening()

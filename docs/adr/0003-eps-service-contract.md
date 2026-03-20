@@ -33,7 +33,7 @@ namespaces. The analogy is conceptual only — the scope is much smaller.
 
 ### The `[service]` block
 
-An EPS that wants to be deployable via `epc deploy` must include a `[service]` section
+An EPS that wants to be deployable via `epc serve` must include a `[service]` section
 in its `eps.toml`:
 
 ```toml
@@ -44,7 +44,7 @@ port    = 8765           # the port the process will bind to
 ```
 
 **`enabled`** — explicit opt-in. A package with `enabled = false` (or no `[service]`
-block at all) is not deployable via EPC. `epc deploy` will fail immediately with a
+block at all) is not deployable via EPC. `epc serve` will fail immediately with a
 clear message. This prevents accidental deployment of CLI-only packages.
 
 **`start`** — the shell command EPC runs to start the service. It is executed via
@@ -104,7 +104,7 @@ exec ./target/release/simple_todo serve --port "${PORT:-8765}"
 ```
 
 ```sh
-epc deploy simple_todo --local ./simple_todo
+epc serve simple_todo --local ./simple_todo
 # → Deployed simple_todo → http://100.x.x.x:8765
 ```
 
@@ -124,5 +124,5 @@ The API is then reachable from any device in the tailnet at that URL.
 - No port conflict detection yet — two packages declaring the same port will race
 - No health check — EPC assumes the process is running if the PID is alive
 - `serve.sh` must build the binary on first deploy; this is slow for large Rust projects
-  (future: `epc deploy` could run `cargo build --release` as a pre-step)
+  (future: `epc serve` could run `cargo build --release` as a pre-step)
 - The `start` command runs without a sandbox or resource limits — full trust model

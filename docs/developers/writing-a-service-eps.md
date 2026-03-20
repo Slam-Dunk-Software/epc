@@ -25,7 +25,7 @@ startup      = true              # optional; set false to exclude from `epc star
 ## What EPC does with it
 
 1. Install the package via EPM: `epm install <name>`
-2. Deploy it: `epc deploy <name>`
+2. Deploy it: `epc serve <name>`
 3. EPC reads `[service]` from the installed `eps.toml`
 4. It checks the port isn't already in use
 5. It sets the `PORT` environment variable and runs `start` via `bash -c` in a new process group

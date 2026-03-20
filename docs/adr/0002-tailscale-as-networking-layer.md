@@ -64,7 +64,7 @@ use, open-source (client), and does the right thing by default.
 ## Consequences
 
 **Positive:**
-- EPC can surface real, working URLs immediately after `epc deploy` — no user configuration
+- EPC can surface real, working URLs immediately after `epc serve` — no user configuration
 - HTTPS is available out of the box via Tailscale's cert provisioning (`tailscale cert`)
 - Device auth is handled by Tailscale; EPC inherits it for free
 - Tailscale Funnel is a natural opt-in path for making individual services public

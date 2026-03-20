@@ -16,8 +16,8 @@ it's just a process supervisor watching an empty list.
 Deploy an EPS package as a persistent service:
 
 ```bash
-epc deploy tech_talker        # latest version
-epc deploy tech_talker@1.2.0  # pinned version
+epc serve tech_talker        # latest version
+epc serve tech_talker@1.2.0  # pinned version
 ```
 
 EPC reads `[service]` from the package's `eps.toml` to know how to start it and what
@@ -57,7 +57,7 @@ EPC ships without a web dashboard. The CLI (`epc ps`) is the default interface.
 To add a dashboard, install a dashboard EPS and register it:
 
 ```bash
-epc deploy portboard   # example dashboard EPS (hypothetical)
+epc serve portboard   # example dashboard EPS (hypothetical)
 ```
 
 Or build your own. A dashboard EPS is just a web app that reads `~/.epc/services.toml`

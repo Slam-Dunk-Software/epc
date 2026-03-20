@@ -4,7 +4,7 @@ EPC has three named extension points. See also: [`CUSTOMIZE.md`](../../CUSTOMIZE
 
 ## Port 1: Services
 
-The primary port. An EPS package is deployed into this port via `epc deploy`. EPC reads
+The primary port. An EPS package is deployed into this port via `epc serve`. EPC reads
 the package's `[service]` block in `eps.toml` to know how to run it.
 
 This port has no upper limit — deploy as many services as your hardware can run.
@@ -31,4 +31,4 @@ dashboard EPS — a web app that reads `~/.epc/services.toml` and renders a link
 The contract for a dashboard EPS:
 - Reads `~/.epc/services.toml` (or accepts it as a config path)
 - Serves a web page listing services and their Tailscale URLs
-- Is itself a service, deployed via `epc deploy <dashboard-eps>`
+- Is itself a service, deployed via `epc serve <dashboard-eps>`

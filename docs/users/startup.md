@@ -24,7 +24,7 @@ From now on, every time you log in, `epc startup` runs automatically in the back
 2. `epc startup` waits up to 30 seconds for Tailscale to be connected.
 3. For each service in `~/.epc/services.toml`:
    - If its port is already listening → skipped (already running).
-   - If its project directory exists → deployed via `epc deploy --local <dir>`.
+   - If its project directory exists → deployed via `epc serve --local <dir>`.
    - If the directory is missing → warning printed, skipped.
 4. A summary is written to `~/.epc/logs/startup.log`.
 
@@ -77,6 +77,6 @@ so existing services are unaffected unless you explicitly opt out.
 ## How it relates to services.toml
 
 `epc startup` reads `~/.epc/services.toml` — the same state file that `epc ps` and
-`epc deploy` use. Any service you have ever deployed is recorded there. If you
+`epc serve` use. Any service you have ever deployed is recorded there. If you
 permanently decommission a service, `epc stop <name>` removes it from the file so
 it won't be restarted on the next login.

@@ -34,9 +34,9 @@ pub fn resolve_package_dir_inner(
             "no eps.toml found in the current directory\n\
              \n\
              Usage:\n\
-             \tepc deploy                    # inside a project directory\n\
-             \tepc deploy --local <path>     # explicit local path\n\
-             \tepc deploy <package-name>     # installed via epm"
+             \tepc serve                    # inside a project directory\n\
+             \tepc serve --local <path>     # explicit local path\n\
+             \tepc serve <package-name>     # installed via epm"
         );
     }
 
@@ -57,8 +57,8 @@ pub fn resolve_package_dir_inner(
             "package '{spec}' is not installed\n\
              \n\
              Did you mean to deploy a local project? Try:\n\
-             \tepc deploy --local <path>   # e.g. epc deploy --local ./my-project\n\
-             \tepc deploy                  # from inside the project directory\n\
+             \tepc serve --local <path>   # e.g. epc serve --local ./my-project\n\
+             \tepc serve                  # from inside the project directory\n\
              \n\
              Or install it first with:  epm install {spec}"
         );
