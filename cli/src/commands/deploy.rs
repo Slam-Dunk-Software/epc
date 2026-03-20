@@ -171,8 +171,8 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
                 eprintln!("  \x1b[2m... ({} more lines)\x1b[0m", lines.len() - 10);
             }
         }
-        eprintln!("\n  \x1b[2mFull logs:\x1b[0m \x1b[36mepc logs {name}\x1b[0m");
-        eprintln!("  \x1b[2mFix the error above, then run\x1b[0m \x1b[36mepc deploy\x1b[0m \x1b[2magain.\x1b[0m");
+        eprintln!("\n  \x1b[2mFull logs:\x1b[0m \x1b[36m{}\x1b[0m", log_path.display());
+        eprintln!("  \x1b[2mFix the error above, then run\x1b[0m \x1b[36mepc serve\x1b[0m \x1b[2magain.\x1b[0m");
         std::process::exit(1);
     }
 
