@@ -10,3 +10,4 @@ pub mod restart;
 pub mod self_update;
 pub mod startup;
 pub mod stop;
+pub mod sync;

@@ -48,6 +48,11 @@ enum Commands {
     },
     /// Remove all services whose project directory no longer exists
     Prune,
+    /// Repair services.toml from the persistent registry.
+    /// Re-registers any service in ~/.epc/registry.toml that is currently
+    /// running (port listening) but missing from services.toml. Run this
+    /// after services.toml is lost or after processes started outside EPC.
+    Sync,
     /// Stop and restart a running service (picks up source changes)
     Restart {
         /// Service name
@@ -99,6 +104,7 @@ async fn main() -> Result<()> {
         Commands::Stop { name } => commands::stop::run(name)?,
         Commands::Remove { name } => commands::remove::run(name)?,
         Commands::Prune => commands::prune::run()?,
+        Commands::Sync => commands::sync::run()?,
         Commands::Restart { name } => commands::restart::run(name).await?,
         Commands::Startup => commands::startup::run().await?,
         #[cfg(target_os = "macos")]

@@ -2,20 +2,23 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 
-use crate::{eps::EpsManifest, state::ServicesFile};
+use crate::{eps::EpsManifest, state::{RegistryFile, ServicesFile}};
 
 pub async fn run() -> Result<()> {
-    let services = ServicesFile::load()?;
+    // Use the registry as the source of truth — it persists across services.toml
+    // wipes and records every project dir ever handed to `epc serve`.
+    let registry = RegistryFile::load()?;
 
-    if services.services.is_empty() {
-        println!("No services registered in ~/.epc/services.toml. Nothing to start.");
+    if registry.services.is_empty() {
+        println!("No services in ~/.epc/registry.toml. Nothing to start.");
+        println!("Run `epc serve` inside a project directory to register a service.");
         return Ok(());
     }
 
     // Wait for Tailscale before spawning services that bind to the Tailscale IP
     wait_for_tailscale(30).await;
 
-    let total = services.services.len();
+    let total = registry.services.len();
     println!(
         "Starting {total} registered service{}...\n",
         if total == 1 { "" } else { "s" }
@@ -26,22 +29,13 @@ pub async fn run() -> Result<()> {
     let mut failed = 0usize;
 
     // Sort for deterministic output
-    let mut names: Vec<_> = services.services.keys().cloned().collect();
+    let mut names: Vec<_> = registry.services.keys().cloned().collect();
     names.sort();
 
     for name in &names {
-        let entry = &services.services[name];
-
-        if ServicesFile::is_port_listening(entry.port) {
-            println!(
-                "  \x1b[2m↓ {name} already running on :{}\x1b[0m",
-                entry.port
-            );
-            skipped += 1;
-            continue;
-        }
-
+        let entry = &registry.services[name];
         let dir = PathBuf::from(&entry.dir);
+
         if !dir.exists() {
             eprintln!(
                 "  \x1b[33m⚠ {name}: directory not found ({}) — skipping\x1b[0m",
@@ -49,6 +43,20 @@ pub async fn run() -> Result<()> {
             );
             failed += 1;
             continue;
+        }
+
+        // Read port from eps.toml to check liveness — the registry only stores dirs.
+        let port = EpsManifest::from_file(&dir.join("eps.toml"))
+            .ok()
+            .and_then(|m| m.service)
+            .map(|s| s.port);
+
+        if let Some(port) = port {
+            if ServicesFile::is_port_listening(port) {
+                println!("  \x1b[2m↓ {name} already running on :{port}\x1b[0m");
+                skipped += 1;
+                continue;
+            }
         }
 
         // Respect startup = false in eps.toml

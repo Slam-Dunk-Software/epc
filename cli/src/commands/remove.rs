@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use rusqlite;
 
-use crate::state::{ServiceEntry, ServicesFile};
+use crate::state::{RegistryFile, ServiceEntry, ServicesFile};
 
 pub fn run(name: &str) -> Result<()> {
     run_with_paths(
@@ -44,9 +44,14 @@ pub fn run_with_paths(name: &str, state_path: &Path, db_path: &Path) -> Result<(
             .ok();
     }
 
-    // Remove from state file
+    // Remove from state file and persistent registry
     services.remove(name);
     services.save()?;
+
+    if let Ok(mut registry) = RegistryFile::load() {
+        registry.remove(name);
+        registry.save().ok();
+    }
 
     // Delete log file (best-effort)
     let log = std::path::Path::new(&entry.log_file);

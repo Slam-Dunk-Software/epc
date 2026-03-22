@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 use rusqlite;
 
-use crate::state::ServicesFile;
+use crate::state::{RegistryFile, ServicesFile};
 
 pub fn run() -> Result<()> {
     run_internal(
@@ -84,6 +84,11 @@ pub fn run_internal(state_path: &Path, db_path: &Path, confirm: Option<bool>) ->
         }
 
         services.remove(name);
+
+        if let Ok(mut registry) = RegistryFile::load() {
+            registry.remove(name);
+            registry.save().ok();
+        }
 
         let log = std::path::Path::new(&entry.log_file);
         if log.exists() {

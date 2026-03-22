@@ -135,6 +135,82 @@ impl ServicesFile {
     }
 }
 
+// ── RegistryFile ───────────────────────────────────────────────────────────────
+//
+// ~/.epc/registry.toml — a persistent record of every EPS project directory
+// ever handed to `epc serve`. Unlike services.toml (which is live state that
+// gets wiped or repaired frequently), registry.toml is append-only: entries
+// are only removed when the user explicitly asks (`epc remove` / `epc prune`).
+//
+// This is what `epc startup` and `epc sync` use as their source of truth so
+// that both commands work correctly even after services.toml is missing or stale.
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct RegistryFile {
+    #[serde(skip)]
+    path: PathBuf,
+    #[serde(default)]
+    pub services: HashMap<String, RegistryEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistryEntry {
+    /// Absolute path to the package directory
+    pub dir: String,
+}
+
+impl RegistryFile {
+    pub fn default_path() -> Result<PathBuf> {
+        Ok(dirs::home_dir()
+            .context("could not determine home directory")?
+            .join(".epc")
+            .join("registry.toml"))
+    }
+
+    pub fn load() -> Result<Self> {
+        Self::load_from(&Self::default_path()?)
+    }
+
+    pub fn load_from(path: &Path) -> Result<Self> {
+        let mut rf = if path.exists() {
+            let raw = std::fs::read_to_string(path)
+                .with_context(|| format!("failed to read {}", path.display()))?;
+            let mut parsed: Self = toml::from_str(&raw)
+                .with_context(|| format!("failed to parse {}", path.display()))?;
+            parsed.path = path.to_path_buf();
+            parsed
+        } else {
+            let mut rf = Self::default();
+            rf.path = path.to_path_buf();
+            rf
+        };
+        rf.path = path.to_path_buf();
+        Ok(rf)
+    }
+
+    pub fn save(&self) -> Result<()> {
+        let path = if self.path == PathBuf::default() {
+            Self::default_path()?
+        } else {
+            self.path.clone()
+        };
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let raw = toml::to_string_pretty(self).context("failed to serialize registry.toml")?;
+        std::fs::write(&path, raw)
+            .with_context(|| format!("failed to write {}", path.display()))
+    }
+
+    pub fn insert(&mut self, name: String, dir: String) {
+        self.services.insert(name, RegistryEntry { dir });
+    }
+
+    pub fn remove(&mut self, name: &str) -> Option<RegistryEntry> {
+        self.services.remove(name)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

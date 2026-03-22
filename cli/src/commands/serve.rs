@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 
 use crate::{
     eps::EpsManifest,
-    state::{ServiceEntry, ServicesFile},
+    state::{RegistryFile, ServiceEntry, ServicesFile},
     tailscale,
 };
 
@@ -190,6 +190,12 @@ pub async fn run(spec: Option<&str>, local: Option<&Path>) -> Result<()> {
     };
     services.insert(name.clone(), entry);
     services.save()?;
+
+    // Persist to the registry so startup/sync can find this service
+    // even if services.toml is wiped or lost.
+    let mut registry = RegistryFile::load()?;
+    registry.insert(name.clone(), pkg_dir.to_string_lossy().to_string());
+    registry.save()?;
 
     println!("\n\x1b[32m✓\x1b[0m \x1b[1m{name}\x1b[0m deployed \x1b[36m→ http://{host}:{port}\x1b[0m");
     println!("  \x1b[2mpid   {pid}\x1b[0m");
